@@ -1,5 +1,9 @@
 package com.erezShevach.seleniumTask;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
@@ -7,7 +11,9 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
-
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 
@@ -30,7 +36,9 @@ public class Main {
     public static void main(String[] args) {
         WebDriver browser = new ChromeDriver();
         try {
+            //managing browser
             browser.manage().timeouts().implicitlyWait(Duration.ofSeconds(30));
+            browser.manage().window().maximize();
             //opening LinkedIn
             browser.get("https://www.linkedin.com/home");
             //clicking "Sign In"
@@ -48,14 +56,15 @@ public class Main {
             //clicking "My Network">"Connections"
             browser.findElement(myNetwork).click();
             browser.findElement(connections).click();
-
+            //collecting connections
             List<WebElement> connectionsList = browser.findElements(connectionElement);
+            //building output JSON
             JSONObject res = new JSONObject();
             res.put("myName", name);
-            res.put("city", location);
-            res.put("work", headline);
+            res.put("myLocation", location);
+            res.put("myWork", headline);
             res.put("connections", createConnectionsArray(connectionsList));
-            System.out.println(res);
+            writeToFilePretty(res.toString());
 
         } catch (Exception e) {
             System.out.println("Failed to execute: "+ e.getMessage());
@@ -73,5 +82,18 @@ public class Main {
             connectionsArr.put(connectionArr);
         }
         return connectionsArr;
+    }
+
+    private static void writeToFilePretty(String outputJson) {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("output\\output.json"));
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            JsonElement jsonElement = JsonParser.parseString(outputJson);
+            String outputPretty = gson.toJson(jsonElement);
+            writer.write(outputPretty);
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
